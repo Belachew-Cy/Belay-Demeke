@@ -1,18 +1,36 @@
 # Environment
 .venv/
+venv/
+env/
 __pycache__/
 *.py[cod]
 .idea/
 .vscode/
 
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
 # Secrets and local runtime state
 .env
 instance/
 _legacy/
+config.py
 
 # Family content — keep private, back these up separately
 uploads/
 *.json.tmp
+
+# Runtime data / user content (add these if they hold real data)
+activity_log.json
+announcements.json
+events.json
+join_requests.json
+messages.json
+notifications.json
+posts.json
+users.json
 
 # OS
 .DS_Store
