@@ -1,0 +1,275 @@
+{
+  "Belachew": {
+    "name": "Belachew Buta",
+    "role": "admin",
+    "email": "belachewbuta@gmail.com",
+    "phone": "0953605162",
+    "relationship": "Administartor",
+    "location": "Addis Abeba",
+    "bio": "Controls, monitors, and manages system operations to ensure smooth performance.",
+    "avatar": "/uploads/1046d2a940dc45a285f5cad1693240b1.jpg",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$6HIrHI2aiFpSV3b5$f457c2c0bdeef99a013e065793eb43b1fd27feed2595852c89943b9b0c0956bab4aebb1c1a75abdaf4f0e56a1ed9bb7ae096f398719eda33f95e7754697ed5c6",
+    "username": "Belachew",
+    "joined_at": "2026-10-10T11:28:36.997019+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Tamru": {
+    "name": "Tamru Belay",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Team Leader",
+    "location": "Addis Ababa",
+    "bio": "Leads the team, assigns tasks, monitors performance, and ensures goals are achieved.",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$qfdhxaGOiaQJ08L1$183c3bfd0a7c637c092d4982951a548cc4a4972652f96ce4a1b87105a49830b018ad92ade9f61e884dbba03821cf75621704d34efdadd7484fe4b06fb1e0131a",
+    "username": "Tamru",
+    "joined_at": "2026-10-10T11:28:36.997037+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Dereje": {
+    "name": "Dereje Belay",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Secretary",
+    "location": "Addis Ababa",
+    "bio": "Provides administrative support, manages documents, and coordinates family activities.",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$4EVnddMQVTtSKHmz$bbea911cbd47cf203f3f0ff71ba645cfd1d3e0bcaceda2c8142a9b8a523af05d8539090b50d2a736096616d5e40f5608356a06ee3b15439a3ca0a5d65f212a17",
+    "username": "Dereje",
+    "joined_at": "2026-10-10T11:28:36.997041+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Endeg": {
+    "name": "Endeg Kelkay",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Account Controller",
+    "location": "Addis Ababa",
+    "bio": "Banking transaction controller .",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$oF6gBxpF8ExPiduW$9be0d1b9fe550e0f1344bc0d6ee3d6624387560aa81d0e5db84dd5404810f3ab4e2eaf8641e4eb6b16e4f6979b8d2b435b927457a2a14d32137eb7fee65f3f41",
+    "username": "Endeg",
+    "joined_at": "2026-10-10T11:28:36.997044+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Abiyot": {
+    "name": "Abiyot Belay",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Food Procesing",
+    "location": "Koye Fiche",
+    "bio": "Manages food preparation and oversees family activities. ",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$LWTNSPStTI5cQSHL$fa4f062b781d898a7d6abd0b1fc9316fbfd1a71dacb988291a4a4b47389dab39f1d313efabfdcbdc46adf05aa3237cd07eff61023258b02e81df89630805f14c",
+    "username": "Abiyot",
+    "joined_at": "2026-10-10T11:28:36.997046+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Abeba": {
+    "name": "Abeba Teshome",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Member",
+    "location": "Addis Ababa",
+    "bio": "Members of the Family  ",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$LWTNSPStTI5cQSHL$fa4f062b781d898a7d6abd0b1fc9316fbfd1a71dacb988291a4a4b47389dab39f1d313efabfdcbdc46adf05aa3237cd07eff61023258b02e81df89630805f14c",
+    "username": "Abeba",
+    "joined_at": "2026-10-10T11:28:36.997046+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Mistre": {
+    "name": "Mistre Belay",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Family Member",
+    "location": "Addis Ababa",
+    "bio": "Members of the Family",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$LWTNSPStTI5cQSHL$fa4f062b781d898a7d6abd0b1fc9316fbfd1a71dacb988291a4a4b47389dab39f1d313efabfdcbdc46adf05aa3237cd07eff61023258b02e81df89630805f14c",
+    "username": "Mistre",
+    "joined_at": "2026-10-10T11:28:36.997046+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "Demis": {
+    "name": "Demis Belay",
+    "role": "member",
+    "email": "",
+    "phone": "",
+    "relationship": "Manager Family Member",
+    "location": "Addis Ababa",
+    "bio": "Manege of the Family ",
+    "avatar": "",
+    "is_active": true,
+    "password": "scrypt:32768:8:1$LWTNSPStTI5cQSHL$fa4f062b781d898a7d6abd0b1fc9316fbfd1a71dacb988291a4a4b47389dab39f1d313efabfdcbdc46adf05aa3237cd07eff61023258b02e81df89630805f14c",
+    "username": "Demis",
+    "joined_at": "2026-10-10T11:28:36.997046+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "testmember": {
+    "name": "Test Member",
+    "role": "member",
+    "email": "test@example.com",
+    "phone": "",
+    "relationship": "Test",
+    "location": "Addis Ababa",
+    "bio": "",
+    "avatar": "",
+    "is_active": true,
+    "username": "testmember",
+    "joined_at": "2026-10-10T11:43:41.122769+00:00",
+    "password": "scrypt:32768:8:1$JIRTaqBOK5Cyikzv$5520501e5ba32b99c97135bd3b5af60a33cf951b6bf0854f2081d577c21d57e5360e567faff5cafe5635dd75d5c7d9845e5139d668f772dbb2175292f2d18e29",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "banchaymolu": {
+    "name": "Banchaymolu Kelkay",
+    "role": "member",
+    "email": "banchaymolu@gmail.com",
+    "phone": "",
+    "relationship": "Member",
+    "location": "Addis Ababa",
+    "bio": "",
+    "avatar": "",
+    "is_active": true,
+    "username": "banchaymolu",
+    "joined_at": "2026-10-10T12:59:50.752018+00:00",
+    "password": "scrypt:32768:8:1$sa4WBIM9ApEfGtQW$86c190c131c4454b0870dcc345bde001c14e1f07b6227eb82a8790ee05f29358fb12da205199433443adc7898da6ebd051a1514fa82a1f03dee92cbe34068c54",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "yohannes": {
+    "name": "Yohannes Kelkay Moges",
+    "role": "member",
+    "email": "belachew@gmail.com",
+    "phone": "0932412396",
+    "relationship": "Member",
+    "location": "Addis Ababa",
+    "bio": "",
+    "avatar": "",
+    "is_active": true,
+    "username": "yohannes",
+    "joined_at": "2026-10-12T15:13:40.465546+00:00",
+    "password": "scrypt:32768:8:1$1bH2I1OBxacp99kw$99ed88889dcda2a6babfc0da92fd4855e1cd91b6339cd1c549a61e0b8960e334dc592b27d9723d173c9cb44bc51ab1a62bc74d457eaa0d85ab234c248560293d",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    }
+  },
+  "user": {
+    "name": "User",
+    "role": "member",
+    "email": "hello@gmail.com",
+    "phone": "",
+    "relationship": "Member",
+    "location": "Addis Ababa",
+    "bio": "This for Testing",
+    "avatar": "/uploads/3c8c03550201442d95a22ec9c3d51c30.jpg",
+    "is_active": true,
+    "username": "user",
+    "joined_at": "2026-10-13T14:46:23.435008+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    },
+    "password": "scrypt:32768:8:1$3snfdQy5OyyS7DgI$20a5c53bbe89a2ad8e8b6a626b79db90ec67c58b148585787edbe4c6df849561aee3c20e989e2144579ec81ec13cad51bca57d7bf2c0ba52963d4b1023e0416e"
+  },
+  "nakachew": {
+    "name": "Nakachew Teshome",
+    "role": "member",
+    "email": "hello1@gmail.com",
+    "phone": "+251956892541",
+    "relationship": "Administartor",
+    "location": "Addis Ababa",
+    "bio": "",
+    "avatar": "",
+    "is_active": true,
+    "username": "nakachew",
+    "joined_at": "2026-10-14T10:37:21.411387+00:00",
+    "notify": {
+      "announcement": true,
+      "event": true,
+      "memory": true,
+      "message": true,
+      "account": true
+    },
+    "password": "scrypt:32768:8:1$S11ebNx3qbgbcqEu$78c897605d53167059176d73a0ad8f1effc451f0982b72332acbab8c22dedf52a6f0feb8a5459334a814c519dc4bf56bd879c21812769c33c4c5dbd627c77ec0"
+  }
+}

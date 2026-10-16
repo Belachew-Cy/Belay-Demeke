@@ -1,0 +1,19 @@
+# Environment
+.venv/
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+
+# Secrets and local runtime state
+.env
+instance/
+_legacy/
+
+# Family content — keep private, back these up separately
+uploads/
+*.json.tmp
+
+# OS
+.DS_Store
+Thumbs.db

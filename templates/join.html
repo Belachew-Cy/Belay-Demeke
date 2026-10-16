@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from 'icons.html' import icon %}
+
+{% block title %}Request an account — {{ family_name }}{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+
+  <aside class="auth-aside">
+    <div class="auth-aside-bg" style="background-image:url('{{ url_for('static', filename='img/about-family.jpg') }}')"></div>
+    <div class="auth-aside-inner">
+      <a href="{{ url_for('index') }}" class="logo logo-light">
+        <img src="{{ url_for('static', filename='img/Belay.jpg') }}" alt="" class="logo-img" />
+        <span class="logo-text">
+          <span class="logo-name">{{ family_name }} <b>Family</b></span>
+          <em>Together Always</em>
+        </span>
+      </a>
+      <h2 class="auth-aside-title">Become part of the story</h2>
+      <ul class="auth-perks">
+        <li><span>{{ icon('camera') }}</span> Share photos and videos with the whole family</li>
+        <li><span>{{ icon('calendar') }}</span> See every gathering on the family calendar</li>
+        <li><span>{{ icon('users') }}</span> Keep your own profile and stay in touch</li>
+        <li><span>{{ icon('lock') }}</span> Everything stays private to our family</li>
+      </ul>
+      <p class="auth-aside-note">Accounts are set up by a family administrator. Send a request below and
+        one of them will create your sign-in and email you the details.</p>
+      <a href="{{ url_for('index') }}" class="btn btn-text-light">&larr; Back to home</a>
+    </div>
+  </aside>
+
+  <section class="auth-main">
+    <div class="auth-card auth-card-wide">
+      <header class="auth-head">
+        <h1>Request an account</h1>
+        <p>Tell us who you are. A family admin approves every account by hand.</p>
+      </header>
+
+      <form method="POST" action="{{ url_for('join') }}" class="auth-form" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="field-row">
+          <div class="field">
+            <label for="name">Full name <span class="req">*</span></label>
+            <input type="text" id="name" name="name" value="{{ form.name }}"
+                   placeholder="e.g. Tamru Belay" required maxlength="80" autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for="relationship">How are you related?</label>
+            <input type="text" id="relationship" name="relationship" value="{{ form.relationship }}"
+                   placeholder="e.g. Nephew, Daughter-in-law" maxlength="60" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="email">Email <span class="req">*</span></label>
+            <input type="email" id="email" name="email" value="{{ form.email }}"
+                   placeholder="you@example.com" required maxlength="120" autocomplete="email" />
+            <small class="hint">Your admin replies to this address with your username and first password.</small>
+          </div>
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" value="{{ form.phone }}"
+                   placeholder="+251 ..." maxlength="32" autocomplete="tel" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="location">City / Country</label>
+          <input type="text" id="location" name="location" value="{{ form.location }}"
+                 placeholder="e.g. Addis Ababa" maxlength="80" autocomplete="address-level2" />
+        </div>
+
+        <div class="field">
+          <label for="note">Anything the family should know?</label>
+          <textarea id="note" name="note" rows="4" maxlength="600"
+                    placeholder="Tell us a little about yourself...">{{ form.note }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-block">{{ icon('user-plus') }}Send request</button>
+      </form>
+
+      <p class="auth-foot">
+        Already have an account? <a href="{{ url_for('login') }}">Sign in here</a>
+      </p>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

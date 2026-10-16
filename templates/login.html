@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Family Login — {{ family_name }}{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+
+  <aside class="auth-aside">
+    <div class="auth-aside-bg" style="background-image:url('{{ url_for('static', filename='img/memory-coffee.jpg') }}')"></div>
+    <div class="auth-aside-inner">
+      <a href="{{ url_for('index') }}" class="logo logo-light">
+        <img src="{{ url_for('static', filename='img/Belay.jpg') }}" alt="" class="logo-img" />
+        <span class="logo-text">
+          <span class="logo-name">{{ family_name }} <b>Family</b></span>
+          <em>Together Always</em>
+        </span>
+      </a>
+      <blockquote>
+        &ldquo;The love of a family is life's greatest blessing.&rdquo;
+      </blockquote>
+      <p class="auth-aside-note">
+        Sign in to reach the private family album, the shared calendar and everyone's profiles.
+      </p>
+      <a href="{{ url_for('index') }}" class="btn btn-text-light">&larr; Back to home</a>
+    </div>
+  </aside>
+
+  <section class="auth-main">
+    <div class="auth-card">
+      <header class="auth-head">
+        <h1>Welcome back</h1>
+        <p>Sign in with your family account.</p>
+      </header>
+
+      {% if locked_for %}
+        <div class="alert alert-danger">
+          Too many failed attempts. Try again in <strong id="lockCount">{{ locked_for }}</strong> seconds.
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('login') }}" class="auth-form" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="next" value="{{ next or '' }}" />
+
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" value="{{ username }}"
+                 placeholder="e.g. belay" required autofocus
+                 autocomplete="username" maxlength="64" />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="input-affix">
+            <input type="password" id="password" name="password" placeholder="Your password"
+                   required autocomplete="current-password" />
+            <button type="button" class="toggle-pass" data-target="password" aria-label="Show password">Show</button>
+          </div>
+        </div>
+
+         <button type="submit" class="btn btn-block">Sign In</button>
+        <p class="auth-forgot"><a href="{{ url_for('forgot_password') }}">Forgot your password?</a></p>
+      </form>
+
+      <p class="auth-foot">
+        Not a member yet?
+        <a href="{{ url_for('join') }}">Request an account</a>
+      </p>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

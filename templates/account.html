@@ -1,0 +1,173 @@
+{#
+  Account panels shared by the administrator dashboard and the member space.
+  Both pages render the same inbox and profile forms from here, so a change to
+  one is automatically correct in the other.
+#}
+{% from 'icons.html' import icon %}
+{% from 'notif.html' import notif_row with context %}
+
+{% macro notifications_panel(active=false) %}
+  {% set notif_prefs = [
+    ('announcement', 'Family announcements', 'An admin publishes an announcement.'),
+    ('event', 'Calendar events', 'Something new is added to the family calendar.'),
+    ('memory', 'Shared memories', 'Anyone posts a photo, video or document.'),
+    ('message', 'Visitor messages', 'The contact form sends a note to the admins.'),
+  ] %}
+  <section class="panel{{ ' is-active' if active else '' }}" id="notifications">
+    <div class="panel-head">
+      <h2>Notifications</h2>
+      <span class="chip chip-rose" id="notifUnread"{% if not unread_count %} hidden{% endif %}>
+        {{ unread_count }} unread
+      </span>
+      <div class="panel-actions">
+        {% if unread_count %}
+          <form method="POST" action="{{ url_for('read_all_notifications') }}" data-ajax="1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-xs btn-ghost">Mark all as read</button>
+          </form>
+        {% endif %}
+        {% if notifications %}
+          <form method="POST" action="{{ url_for('clear_notifications') }}"
+                data-confirm="Clear every notification from your inbox?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-xs btn-ghost">Clear inbox</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="notif-layout">
+      <div class="panel-card">
+        <h3>Your inbox</h3>
+        {% if notifications %}
+          <ul class="notif-list">
+            {% for note in notifications %}{{ notif_row(note) }}{% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">Nothing here yet. Announcements, calendar invites and new memories
+            will land in this inbox.</p>
+        {% endif %}
+      </div>
+
+      <form method="POST" action="{{ url_for('save_notify_preferences') }}" class="panel-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <h3>{{ icon('sliders') }}When to notify me</h3>
+        <p class="section-lead">Choose what appears in your inbox and on the bell.</p>
+
+        <ul class="switch-list">
+          {% for kind, label, help in notif_prefs %}
+            <li>
+              <label class="switch">
+                <input type="checkbox" name="notify_{{ kind }}"
+                       {% if me.notify and me.notify[kind] %}checked{% endif %} />
+                <span class="switch-track" aria-hidden="true"></span>
+                <span class="switch-text">
+                  <strong>{{ label }}</strong>
+                  <small>{{ help }}</small>
+                </span>
+              </label>
+            </li>
+          {% endfor %}
+          <li class="is-locked">
+            <span class="switch">
+              <span class="switch-track is-on" aria-hidden="true"></span>
+              <span class="switch-text">
+                <strong>Account notices</strong>
+                <small>Welcome, role changes and reactivations &mdash; always on.</small>
+              </span>
+            </span>
+          </li>
+        </ul>
+
+        <button type="submit" class="btn btn-sm">{{ icon('check') }}Save settings</button>
+      </form>
+    </div>
+  </section>
+{% endmacro %}
+
+{% macro profile_panel() %}
+  <section class="panel" id="profile">
+    <h2>My Profile</h2>
+
+    <form method="POST" action="{{ url_for('upload_avatar') }}" enctype="multipart/form-data" class="panel-card span-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <h3>Profile photo</h3>
+      <p class="section-lead">Your photo shows next to your name in the family directory.</p>
+
+      <div class="avatar-picker">
+        {% if me.avatar %}
+          <img src="{{ me.avatar }}" alt="" class="member-avatar" />
+        {% else %}
+          <span class="avatar-initials avatar-lg" aria-hidden="true">{{ me.name.split() | map('first') | join('') | upper }}</span>
+        {% endif %}
+        <div class="field">
+          <label for="p-avatar">Choose a photo</label>
+          <input type="file" id="p-avatar" name="avatar" accept="image/png,image/jpeg,image/gif,image/webp" required />
+          <small class="hint">PNG, JPG, GIF or WEBP &middot; up to 5 MB.</small>
+        </div>
+        <button type="submit" class="btn">{{ icon('camera') }}Upload photo</button>
+      </div>
+    </form>
+
+    <div class="panel-grid">
+      <form method="POST" action="{{ url_for('update_profile') }}" class="panel-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <h3>Personal details</h3>
+
+        <div class="field">
+          <label for="p-name">Full name <span class="req">*</span></label>
+          <input type="text" id="p-name" name="name" value="{{ me.name }}" required maxlength="80" />
+        </div>
+        <div class="field">
+          <label for="p-rel">Relationship</label>
+          <input type="text" id="p-rel" name="relationship" value="{{ me.relationship }}" maxlength="60" />
+        </div>
+        <div class="field">
+          <label for="p-email">Email</label>
+          <input type="email" id="p-email" name="email" value="{{ me.email }}" maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="p-phone">Phone</label>
+          <input type="tel" id="p-phone" name="phone" value="{{ me.phone }}" maxlength="32" />
+        </div>
+        <div class="field">
+          <label for="p-loc">City / Country</label>
+          <input type="text" id="p-loc" name="location" value="{{ me.location }}" maxlength="80" />
+        </div>
+        <div class="field">
+          <label for="p-bio">About you</label>
+          <textarea id="p-bio" name="bio" rows="4" maxlength="600">{{ me.bio }}</textarea>
+        </div>
+
+        <button type="submit" class="btn">Save Profile</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('change_password') }}" class="panel-card">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <h3>Change password</h3>
+        <p class="section-lead">Your password is stored as a salted hash — nobody can read it, not even administrators.</p>
+
+        <div class="field">
+          <label for="cur-pass">Current password</label>
+          <input type="password" id="cur-pass" name="current_password" required autocomplete="current-password" />
+        </div>
+        <div class="field">
+          <label for="new-pass">New password</label>
+          <input type="password" id="new-pass" name="new_password" required minlength="8" autocomplete="new-password" />
+          <small class="hint">At least 8 characters, with a letter and a number.</small>
+        </div>
+        <div class="field">
+          <label for="conf-pass">Confirm new password</label>
+          <input type="password" id="conf-pass" name="confirm_password" required minlength="8" autocomplete="new-password" />
+        </div>
+
+        <button type="submit" class="btn">Update Password</button>
+
+        <hr class="divider" />
+        <p class="muted">Signed in as <strong>@{{ me.username }}</strong>.
+          Member since {{ me.joined_at[:10] }}.</p>
+        <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-block">Log out</a>
+      </form>
+    </div>
+  </section>
+{% endmacro %}

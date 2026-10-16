@@ -1,0 +1,38 @@
+{#
+  Notification rows shared by the header bell and the dashboard inbox panel.
+  Keep the markup identical in both places so a row always reads the same way.
+#}
+{% from 'icons.html' import icon %}
+
+{% macro kind_icon(kind) -%}
+  {%- if kind == 'announcement' %}{{ icon('megaphone') }}
+  {%- elif kind == 'event' %}{{ icon('calendar') }}
+  {%- elif kind == 'memory' %}{{ icon('image') }}
+  {%- elif kind == 'message' %}{{ icon('mail') }}
+  {%- else %}{{ icon('shield') }}{% endif -%}
+{%- endmacro %}
+
+{% macro kind_label(kind) -%}
+  {%- if kind == 'announcement' %}Announcement
+  {%- elif kind == 'event' %}Event
+  {%- elif kind == 'memory' %}Memory
+  {%- elif kind == 'message' %}Message
+  {%- else %}Account{% endif -%}
+{%- endmacro %}
+
+{% macro notif_row(n, show_mark=true) %}
+  <li class="notif-row{{ '' if n.read_at else ' is-unread' }}" data-notif-id="{{ n.id }}">
+    <span class="notif-kind notif-{{ n.kind }}" aria-hidden="true">{{ kind_icon(n.kind) }}</span>
+    <a class="notif-body" href="{{ (n.link or url_for('dashboard')) | own_link }}">
+      <strong>{{ n.title }}</strong>
+      {% if n.body %}<p>{{ n.body | truncate(96, true) }}</p>{% endif %}
+      <small>{{ kind_label(n.kind) }}{% if n.actor %} &middot; {{ n.actor }}{% endif %} &middot; {{ n.created_at | when }}</small>
+    </a>
+    {% if show_mark and not n.read_at %}
+      <form method="POST" action="{{ url_for('read_notification', record_id=n.id) }}" class="notif-mark">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="icon-btn" aria-label="Mark as read" title="Mark as read">{{ icon('check') }}</button>
+      </form>
+    {% endif %}
+  </li>
+{% endmacro %}

@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% from 'icons.html' import icon %}
+
+{% block title %}{{ family_name }} Family — Home{% endblock %}
+
+{# Marks the one page whose sections the header strip can track. #}
+{% block body_class %}home-page{% endblock %}
+
+{% block content %}
+
+  {# Fallback imagery so the album looks complete before members upload anything. #}
+  {% set sample = [
+    {'url': url_for('static', filename='img/hero.jpg'), 'title': 'All of us together'},
+    {'url': url_for('static', filename='img/Family-Gena.jpg'), 'title': 'New Year at home'},
+    {'url': url_for('static', filename='img/memory-coffee.jpg'), 'title': 'Morning coffee ceremony'},
+    {'url': url_for('static', filename='img/memory-feast.jpg'), 'title': 'Celebration table'},
+    {'url': url_for('static', filename='img/memory-children.jpg'), 'title': 'Summer in the garden'},
+    {'url': url_for('static', filename='img/event-reunion.jpg'), 'title': 'Family reunion'}
+  ] %}
+  {% set photos = (gallery + sample)[:6] %}
+  {% set months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] %}
+
+  <!-- ============ HERO ============ -->
+  <section id="home" class="hero">
+    <div class="hero-bg" style="background-image:url('{{ url_for('static', filename='img/hero.jpg') }}')"></div>
+    <div class="hero-overlay"></div>
+
+    <div class="container hero-inner">
+      <p class="hero-eyebrow reveal">Welcome to</p>
+      <h1 class="reveal">{{ family_name }}<span class="rose">Family</span></h1>
+      <p class="hero-line reveal">Our family <i>&bull;</i> Our story <i>&bull;</i> Our future</p>
+      <p class="hero-sub reveal">A place to stay connected, share memories, celebrate how far we have come,
+        and keep the bond between us stronger with every generation.</p>
+
+      <div class="hero-buttons reveal">
+        {% if member %}
+          <a href="{{ url_for('dashboard') | own_link }}" class="btn">{{ icon('users') if is_admin else icon('user') }}{{ 'Go to dashboard' if is_admin else 'Go to my space' }}</a>
+        {% else %}
+          <a href="{{ url_for('join') }}" class="btn">{{ icon('user-plus') }}Join our family</a>
+        {% endif %}
+        <a href="#about" class="btn btn-invert">Learn more{{ icon('arrow') }}</a>
+      </div>
+    </div>
+
+    <div class="hero-float">
+      <strong>{{ member_count }}</strong>
+      <span>members<br />and counting</span>
+    </div>
+
+    <a href="#features" class="scroll-hint" aria-label="Scroll down"><span></span></a>
+  </section>
+
+  <!-- ============ FEATURE CARDS ============ -->
+  <section id="features" class="features">
+    <div class="container feature-cards">
+      <a href="#family" class="feature-card reveal">
+        <span class="feature-icon is-rose">{{ icon('users') }}</span>
+        <span>
+          <h3>Family members</h3>
+          <p>Connect with every branch of the family, near or far.</p>
+        </span>
+      </a>
+      <a href="#gallery" class="feature-card reveal">
+        <span class="feature-icon">{{ icon('image') }}</span>
+        <span>
+          <h3>Photo gallery</h3>
+          <p>Share and revisit the moments that made us who we are.</p>
+        </span>
+      </a>
+      <a href="#events" class="feature-card reveal">
+        <span class="feature-icon is-rose">{{ icon('calendar') }}</span>
+        <span>
+          <h3>Events</h3>
+          <p>Birthdays, holidays and gatherings — never miss one again.</p>
+        </span>
+      </a>
+      <a href="#about" class="feature-card reveal">
+        <span class="feature-icon is-amber">{{ icon('book') }}</span>
+        <span>
+          <h3>Family history</h3>
+          <p>Keep our story, names and traditions for the next generation.</p>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <section class="stats">
+    <div class="container stats-grid">
+      <div class="stat reveal"><span class="stat-num" data-count="{{ family_generations }}">0</span><span class="stat-label">Generations</span></div>
+      <div class="stat reveal"><span class="stat-num" data-count="{{ member_count }}">0</span><span class="stat-label">Family Members</span></div>
+      <div class="stat reveal"><span class="stat-num" data-count="{{ family_years }}">0</span><span class="stat-label">Years Together</span></div>
+      <div class="stat reveal"><span class="stat-num" data-count="{{ memory_count }}">0</span><span class="stat-label">Shared Memories</span></div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section id="about" class="section">
+    <div class="container split">
+      <div class="split-media reveal">
+        <img src="{{ url_for('static', filename='img/about-family.jpg') }}" alt="The {{ family_name }} family together" loading="lazy" />
+        <div class="split-badge">
+          <strong>{{ family_years }}</strong>
+          <span>years of<br />togetherness</span>
+        </div>
+      </div>
+
+      <div class="split-body">
+        <span class="section-tag reveal">About our family</span>
+        <h2 class="reveal">Rooted in love, gathered by tradition</h2>
+        <p class="reveal">We are the {{ family_name }} family — a household that loves spending time together,
+          celebrating our traditions and creating new memories at every turn. From the Sunday coffee
+          ceremony to the big holiday table, what matters most is that we are all in the same room.</p>
+
+        <div class="value-cards">
+          <article class="value-card reveal">
+            <span class="value-icon">{{ icon('book') }}</span>
+            <h3>Our Story</h3>
+            <p>From our first home to our growing family, every chapter matters.</p>
+          </article>
+          <article class="value-card reveal">
+            <span class="value-icon">{{ icon('heart') }}</span>
+            <h3>Our Values</h3>
+            <p>Love, respect, faith and togetherness guide everything we do.</p>
+          </article>
+          <article class="value-card reveal">
+            <span class="value-icon">{{ icon('gift') }}</span>
+            <h3>Our Traditions</h3>
+            <p>Coffee ceremonies, holiday gatherings, Sunday meals and shared joy.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAMILY ============ -->
+  <section id="family" class="section section-alt">
+    <div class="container">
+      <span class="section-tag center reveal">Meet the family</span>
+      <h2 class="center reveal">The people we love</h2>
+      <p class="section-lead center reveal">
+        {% if member %}
+          You are signed in as <strong>{{ member.name }}</strong>.
+        {% else %}
+          Family members can sign in to see the full private album and directory.
+        {% endif %}
+      </p>
+
+      <div class="family-grid">
+        {% for person in members %}
+          <article class="family-card reveal">
+            <div class="family-photo">
+              {% if person.avatar %}
+                <img src="{{ person.avatar }}" alt="{{ person.name }}" loading="lazy" />
+              {% else %}
+                <span class="avatar-initials" aria-hidden="true">{{ person.name.split() | map('first') | join('') | upper }}</span>
+              {% endif %}
+              {% if person.role == 'admin' %}<span class="chip chip-admin">Admin</span>{% endif %}
+            </div>
+            <h3>{{ person.name }}</h3>
+            <p class="role">{{ person.relationship or 'Family member' }}</p>
+            {% if person.bio %}<p class="bio">{{ person.bio }}</p>{% endif %}
+            {% if person.location %}<p class="place">{{ icon('pin') }} {{ person.location }}</p>{% endif %}
+          </article>
+        {% else %}
+          <p class="empty">No family members yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MEMORIES + EVENTS ============ -->
+  <section class="section">
+    <div class="container home-grid">
+
+      <div id="gallery">
+        <div class="section-head reveal">
+          <span class="nav-chip nav-chip-rose">{{ icon('camera') }}</span>
+          <h2>Recent memories</h2>
+          {% if member %}
+            <a class="view-all" href="{{ url_for('dashboard', _anchor='album') }}">View all</a>
+          {% else %}
+            <a class="view-all" href="{{ url_for('login') }}">Sign in to see all</a>
+          {% endif %}
+        </div>
+
+        <div class="gallery gallery-compact">
+          {% for photo in photos[:4] %}
+            <figure class="gallery-item reveal" data-src="{{ photo.url }}" data-caption="{{ photo.title }}">
+              <img src="{{ photo.url }}" alt="{{ photo.title }}" loading="lazy" />
+              <figcaption>{{ photo.title }}</figcaption>
+            </figure>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div id="events">
+        <div class="section-head reveal">
+          <span class="nav-chip nav-chip-rose">{{ icon('calendar') }}</span>
+          <h2>Upcoming events</h2>
+        </div>
+
+        {% if events %}
+          <ul class="events-list">
+            {% for event in events[:3] %}
+              <li class="event-row reveal">
+                <div class="event-date {{ 'is-green' if loop.index0 % 2 }}">
+                  <span class="day">{{ event.date[8:10] }}</span>
+                  <span class="month">{{ months[(event.date[5:7] | int) - 1] }}</span>
+                </div>
+                <div class="event-body">
+                  <h3>{{ event.title }}</h3>
+                  {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+                  {% if event.location %}<p class="event-meta"><span>{{ icon('pin') }} {{ event.location }}</span></p>{% endif %}
+                </div>
+                <span class="event-arrow">{{ icon('arrow') }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty reveal">No upcoming events yet. Check back soon.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ ANNOUNCEMENTS ============ -->
+  {% if announcements %}
+  <section id="announcements" class="section section-alt">
+    <div class="container narrow">
+      <div class="section-head reveal">
+        <span class="nav-chip nav-chip-rose">{{ icon('megaphone') }}</span>
+        <h2>Family announcements</h2>
+      </div>
+
+      <div class="announce-stack">
+        {% for note in announcements %}
+          <article class="announce-card reveal {{ 'pinned' if note.pinned }}">
+            <header>
+              <h3>{{ note.title }}</h3>
+              {% if note.pinned %}<span class="chip">Pinned</span>{% endif %}
+            </header>
+            <p>{{ note.body }}</p>
+            <footer>
+              <span>{{ note.author or family_name }} Family</span>
+              <time datetime="{{ note.created_at }}">{{ note.created_at[:10] }}</time>
+            </footer>
+          </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ============ QUOTE ============ -->
+  <section class="quote-banner">
+    <div class="container reveal">
+      <blockquote>&ldquo;A family is a circle of love that never ends.&rdquo;</blockquote>
+      <cite>— The {{ family_name }} Family</cite>
+    </div>
+  </section>
+
+  <!-- ============ CONTACT ============ -->
+  <section id="contact" class="section">
+    <div class="container narrow">
+      <div class="section-head reveal">
+        <span class="nav-chip nav-chip-rose">{{ icon('mail') }}</span>
+        <h2>Say hello</h2>
+      </div>
+      <p class="section-lead reveal">Have a memory to share, or just want to reach the family? We would love to hear from you.</p>
+
+      <form method="POST" action="{{ url_for('contact') }}" class="contact-form reveal" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="field-row">
+          <div class="field">
+            <label for="c-name">Your name</label>
+            <input type="text" id="c-name" name="name" placeholder="Full name" required maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="c-email">Your email</label>
+            <input type="email" id="c-email" name="email" placeholder="you@example.com" required maxlength="120" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="c-message">Message</label>
+          <textarea id="c-message" name="message" rows="5" placeholder="Write your message..." required maxlength="2000"></textarea>
+        </div>
+        <button type="submit" class="btn btn-block">{{ icon('mail') }}Send message</button>
+      </form>
+    </div>
+  </section>
+
+{% endblock %}

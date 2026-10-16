@@ -1,0 +1,212 @@
+{% from 'icons.html' import icon %}
+{% from 'notif.html' import notif_row with context %}
+{%- macro theme_toggle(extra_class='') -%}
+  {# One disc: it shows the icon of the live mode and switches to the other. #}
+  {# On auth pages the header is hidden, so the same switch is floated over the form. #}
+  <button type="button" class="theme-toggle{{ ' ' + extra_class if extra_class else '' }}" id="themeToggle"
+          aria-pressed="false" aria-label="Switch to dark mode"
+          title="Switch between light and dark">
+    <span class="ti-sun">{{ icon('sun') }}</span>
+    <span class="ti-moon">{{ icon('moon') }}</span>
+  </button>
+{%- endmacro -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+  <title>{% block title %}{{ family_name }} Family{% endblock %}</title>
+  <meta name="description" content="{% block description %}The {{ family_name }} family website — sharing memories, moments and milestones together.{% endblock %}" />
+  <link rel="icon" href="{{ url_for('static', filename='img/Belay.jpg') }}" type="image/jpeg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    /* Set before the stylesheet so the first paint is already the right theme. */
+    (function () {
+      try {
+        var saved = localStorage.getItem("belay-theme");
+        var dark = saved ? saved === "dark"
+                             : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <noscript>
+    <style>
+      .reveal { opacity: 1 !important; transform: none !important; }
+    </style>
+  </noscript>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  {% set home = url_for('index') %}
+  {% set auth_screen = 'auth-page' in self.body_class() %}
+  <header class="site-header" id="siteHeader">
+    <div class="container nav-wrap">
+      <a href="{{ home }}" class="logo" aria-label="{{ family_name }} Family — home">
+        <img src="{{ url_for('static', filename='img/Belay.jpg') }}" alt="" class="logo-img" />
+        <span class="logo-text">
+          <span class="logo-name">{{ family_name }} <b>Family</b></span>
+          <em>Together Always</em>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Site sections">
+        <a href="{{ home }}#home"><span class="nav-chip">{{ icon('home') }}</span><span class="nav-label">Home</span></a>
+        <a href="{{ home }}#about"><span class="nav-chip">{{ icon('heart') }}</span><span class="nav-label">About Us</span></a>
+        <a href="{{ home }}#family"><span class="nav-chip">{{ icon('users') }}</span><span class="nav-label">Family Members</span></a>
+        <a href="{{ home }}#gallery"><span class="nav-chip">{{ icon('image') }}</span><span class="nav-label">Gallery</span></a>
+        <a href="{{ home }}#announcements"><span class="nav-chip">{{ icon('megaphone') }}</span><span class="nav-label">Announcements</span></a>
+        <a href="{{ home }}#contact"><span class="nav-chip">{{ icon('mail') }}</span><span class="nav-label">Contact</span></a>
+      </nav>
+
+      {# One row, always: brand, sections, account, notifications, theme. #}
+      <div class="header-tools">
+        <span class="tool-divider" aria-hidden="true"></span>
+
+        {% if member %}
+          {# Only administrators get the admin panel wording, title and destination. #}
+          <a class="tool-btn tool-btn--disc" href="{{ url_for('dashboard') if is_admin else url_for('my_space') }}"
+             title="{{ 'Administrator panel' if is_admin else 'My notifications and profile' }}">
+            {% if is_admin %}{{ icon('users') }}{% else %}{{ icon('user') }}{% endif %}
+            <span class="tool-label">{{ 'Administrator' if is_admin else 'My Space' }}</span>
+          </a>
+          <a class="tool-btn tool-btn--quiet" href="{{ url_for('logout') }}" title="Sign out of the family site">
+            {{ icon('logout') }}<span class="tool-label">Sign out</span>
+          </a>
+
+          <div class="bell" id="bell">
+            <button type="button" class="bell-btn" id="bellBtn"
+                    aria-expanded="false" aria-controls="bellPanel"
+                    aria-label="Notifications{% if unread_count %}, {{ unread_count }} unread{% endif %}">
+              {{ icon('bell') }}
+              {% if unread_count %}
+                <span class="bell-badge" id="bellBadge">{{ unread_count if unread_count < 10 else '9+' }}</span>
+              {% endif %}
+            </button>
+
+            <div class="bell-panel" id="bellPanel" hidden>
+              <div class="bell-head">
+                <h3>Notifications</h3>
+                {% if unread_count %}
+                  <form method="POST" action="{{ url_for('read_all_notifications') }}" data-ajax="1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="bell-clear">Mark all read</button>
+                  </form>
+                {% endif %}
+              </div>
+
+              {% if notifications %}
+                <ul class="notif-list">
+                  {% for note in notifications[:6] %}{{ notif_row(note, show_mark=false) }}{% endfor %}
+                </ul>
+              {% else %}
+                <p class="notif-empty">Nothing new yet. Announcements, events and shared
+                  memories will appear here.</p>
+              {% endif %}
+
+              <a class="bell-foot" href="{{ url_for('dashboard', _anchor='notifications') | own_link }}">Open my inbox</a>
+            </div>
+          </div>
+        {% else %}
+          <a class="tool-btn" href="{{ url_for('login') }}" title="Sign in to the family site">
+            {{ icon('lock') }}<span class="tool-label">Login</span>
+          </a>
+          <a class="tool-btn tool-btn--solid" href="{{ url_for('join') }}" title="Request an account">
+            {{ icon('user-plus') }}<span class="tool-label">Register</span>
+          </a>
+        {% endif %}
+
+        {# The theme disc always closes the row, on every page. #}
+        {% if not auth_screen %}{{ theme_toggle() }}{% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% with flashes = get_flashed_messages(with_categories=true) %}
+    {% if flashes %}
+      <div class="flash-stack container" role="status" aria-live="polite">
+        {% for category, text in flashes %}
+          <div class="flash flash-{{ category }}">
+            <span>{{ text }}</span>
+            <button type="button" class="flash-close" aria-label="Dismiss">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% if auth_screen %}{{ theme_toggle('theme-toggle--auth') }}{% endif %}
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="{{ home }}" class="logo logo-footer">
+          <img src="{{ url_for('static', filename='img/Belay.jpg') }}" alt="" class="logo-img" />
+          <span class="logo-text">
+            <span class="logo-name">{{ family_name }} <b>Family</b></span>
+            <em>Together Always</em>
+          </span>
+        </a>
+        <p class="footer-note">A private place for our family to stay close, wherever we live.</p>
+      </div>
+
+      <div>
+        <h4>Explore</h4>
+        <ul class="footer-links">
+          <li><a href="{{ home }}#about">About us</a></li>
+          <li><a href="{{ home }}#family">Meet the family</a></li>
+          <li><a href="{{ home }}#gallery">Gallery</a></li>
+          <li><a href="{{ home }}#events">Events</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Members</h4>
+        <ul class="footer-links">
+          {% if member %}
+            <li><a href="{{ url_for('dashboard') | own_link }}">{{ 'Dashboard' if is_admin else 'My space' }}</a></li>
+            <li><a href="{{ url_for('dashboard', _anchor='profile') | own_link }}">My profile</a></li>
+            <li><a href="{{ url_for('logout') }}">Log out</a></li>
+          {% else %}
+            <li><a href="{{ url_for('login') }}">Family login</a></li>
+            <li><a href="{{ url_for('join') }}">Request an account</a></li>
+          {% endif %}
+        </ul>
+      </div>
+
+      <div>
+        <h4>Together since</h4>
+        <p class="footer-since">{{ family_years }} years &middot; {{ family_generations }} generations</p>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <div class="container">
+        <p>&copy; <span id="year">{{ current_year }}</span> The {{ family_name }} Family. Made with Belachew<span aria-label="love">&#10084;</span></p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Media preview" hidden>
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close preview">&times;</button>
+    <div class="lightbox-body" id="lightboxBody"></div>
+  </div>
+
+  <button class="to-top" id="toTop" aria-label="Back to top">&uarr;</button>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from 'account.html' import notifications_panel, profile_panel with context %}
+
+{% block title %}My Space — {{ family_name }}{% endblock %}
+{% block body_class %}me-page{% endblock %}
+
+{% block content %}
+
+<section class="dash-hero">
+  <div class="container">
+    <div class="dash-hero-row">
+      <div>
+        <p class="hero-tag">Family space</p>
+        <h1>Welcome, {{ me.name.split()[0] }} <span aria-hidden="true">&#128075;</span></h1>
+        <p class="dash-hero-sub">
+          Your notifications and your own profile settings. Family announcements, events and
+          photos are on the <a href="{{ url_for('index') }}">home page</a>.
+        </p>
+      </div>
+      <div class="dash-hero-card">
+        {% if me.avatar %}
+          <img src="{{ me.avatar }}" alt="" class="member-avatar avatar-lg" />
+        {% else %}
+          <span class="avatar-initials avatar-lg" aria-hidden="true">{{ me.name.split() | map('first') | join('') | upper }}</span>
+        {% endif %}
+        <div>
+          <strong>{{ me.name }}</strong>
+          <span class="chip {{ 'chip-admin' if is_admin }}">{{ 'Admin' if is_admin else 'Member' }}</span>
+          <small>{{ me.relationship or 'Family member' }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container dash-layout">
+
+  <nav class="tabs" id="dashTabs" aria-label="My space sections">
+    <button class="tab is-active" data-tab="notifications" aria-selected="true">
+      Notifications{% if unread_count %} <span class="tab-count">{{ unread_count }}</span>{% endif %}
+    </button>
+    <button class="tab" data-tab="profile" aria-selected="false">My Profile</button>
+  </nav>
+
+  {{ notifications_panel(active=true) }}
+  {{ profile_panel() }}
+
+</div>
+{% endblock %}

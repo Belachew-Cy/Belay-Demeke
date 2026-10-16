@@ -1,0 +1,105 @@
+{#- Shared member card. Used twice by the dashboard: the live directory and, for
+    admins only, the deactivated accounts that stay out of it. -#}
+{% from 'icons.html' import icon %}
+
+{% macro member_card(person, is_admin, me) -%}
+  <article class="member-card{{ '' if person.is_active else ' is-inactive' }}">
+    <div class="member-top">
+      {% if person.avatar %}
+        <img src="{{ person.avatar }}" alt="{{ person.name }}" class="member-avatar" loading="lazy" />
+      {% else %}
+        <span class="avatar-initials" aria-hidden="true">{{ person.name.split() | map('first') | join('') | upper }}</span>
+      {% endif %}
+      <div>
+        <h3>{{ person.name }}</h3>
+        <span class="chip {{ 'chip-admin' if person.role == 'admin' }}">{{ person.role | capitalize }}</span>
+        {% if not person.is_active %}<span class="chip chip-inactive">Deactivated</span>{% endif %}
+      </div>
+    </div>
+
+    <dl class="member-details">
+      <div><dt>Relationship</dt><dd>{{ person.relationship or '—' }}</dd></div>
+      <div><dt>Username</dt><dd>@{{ person.username }}</dd></div>
+      {% if person.location %}<div><dt>Location</dt><dd>{{ person.location }}</dd></div>{% endif %}
+      {% if person.phone %}<div><dt>Phone</dt><dd>{{ person.phone }}</dd></div>{% endif %}
+      {% if person.email %}<div><dt>Email</dt><dd>{{ person.email }}</dd></div>{% endif %}
+      {% if person.bio %}<div><dt>About</dt><dd>{{ person.bio }}</dd></div>{% endif %}
+    </dl>
+
+    {% if is_admin %}
+      {% set uid = person.username | replace('.', '-') | replace('_', '-') %}
+      <details class="member-edit">
+        <summary>{{ icon('sliders') }}Edit details</summary>
+        <form method="POST" action="{{ url_for('edit_member', username=person.username) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="field-row">
+            <div class="field">
+              <label for="e-name-{{ uid }}">Full name <span class="req">*</span></label>
+              <input type="text" id="e-name-{{ uid }}" name="name" required maxlength="80"
+                     value="{{ person.name }}" />
+            </div>
+            <div class="field">
+              <label for="e-rel-{{ uid }}">Relationship</label>
+              <input type="text" id="e-rel-{{ uid }}" name="relationship" maxlength="60"
+                     value="{{ person.relationship }}" placeholder="e.g. Nephew" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="e-email-{{ uid }}">Email</label>
+              <input type="email" id="e-email-{{ uid }}" name="email" maxlength="120"
+                     value="{{ person.email }}" />
+            </div>
+            <div class="field">
+              <label for="e-phone-{{ uid }}">Phone</label>
+              <input type="tel" id="e-phone-{{ uid }}" name="phone" maxlength="32"
+                     value="{{ person.phone }}" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="e-loc-{{ uid }}">City / Country</label>
+            <input type="text" id="e-loc-{{ uid }}" name="location" maxlength="80"
+                   value="{{ person.location }}" placeholder="e.g. Addis Ababa" />
+          </div>
+
+          <div class="field">
+            <label for="e-bio-{{ uid }}">About</label>
+            <textarea id="e-bio-{{ uid }}" name="bio" rows="3" maxlength="600"
+                      placeholder="Shown in the family directory">{{ person.bio }}</textarea>
+          </div>
+
+          <p class="hint">Sign-in name <strong>@{{ person.username }}</strong> stays as it is — it is how
+            {{ person.name.split()[0] }} logs in.</p>
+
+          <button type="submit" class="btn btn-sm">{{ icon('check') }}Save changes</button>
+        </form>
+      </details>
+
+      {% if person.username != me.username %}
+        <div class="member-admin">
+          <form method="POST" action="{{ url_for('change_member_role', username=person.username) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="role" value="{{ 'member' if person.role == 'admin' else 'admin' }}" />
+            <button type="submit" class="btn btn-xs btn-ghost">
+              Make {{ 'member' if person.role == 'admin' else 'admin' }}
+            </button>
+          </form>
+
+          <form method="POST" action="{{ url_for('toggle_member_active', username=person.username) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-xs btn-ghost">{{ 'Deactivate' if person.is_active else 'Reactivate' }}</button>
+          </form>
+
+          <form method="POST" action="{{ url_for('delete_member', username=person.username) }}"
+                data-confirm="Remove {{ person.name }} from the family directory?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-xs btn-danger">Remove</button>
+          </form>
+        </div>
+      {% endif %}
+    {% endif %}
+  </article>
+{%- endmacro %}

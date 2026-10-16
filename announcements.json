@@ -1,0 +1,26 @@
+[
+  {
+    "id": "cb02d1bb41934f71977254d524c9f52e",
+    "created_at": "2026-10-10T11:28:37.036980+00:00",
+    "title": "Welcome to our family website",
+    "body": "This is our private space to share photos, videos, announcements and upcoming gatherings. Register with your real name so we all know who you are.",
+    "author": "Belay Demeke",
+    "pinned": true
+  },
+  {
+    "id": "9a9cec69d6034d4c81410951836773f1",
+    "created_at": "2026-10-16T05:49:20.111346+00:00",
+    "title": "For Test",
+    "body": "I have Test The system",
+    "author": "Belachew Buta",
+    "pinned": false
+  },
+  {
+    "id": "9b508114b9eb49a09b0e13dd063ecaa4",
+    "created_at": "2026-10-16T05:49:39.427559+00:00",
+    "title": "For Test 2",
+    "body": "Have Nice Time",
+    "author": "Belachew Buta",
+    "pinned": true
+  }
+]

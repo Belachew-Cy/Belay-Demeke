@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+{% from 'icons.html' import icon %}
+{% from 'member.html' import member_card with context %}
+{% from 'account.html' import notifications_panel, profile_panel with context %}
+
+{% block title %}Family Dashboard — {{ family_name }}{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% set months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] %}
+
+{% block content %}
+
+<section class="dash-hero">
+  <div class="container">
+    <div class="dash-hero-row">
+      <div>
+        <p class="hero-tag">Family space</p>
+        <h1>Welcome, {{ me.name.split()[0] }} <span aria-hidden="true">&#128075;</span></h1>
+        <p class="dash-hero-sub">
+          {% if is_admin %}
+            You are signed in as an <strong>administrator</strong> — you can publish announcements,
+            add events and manage members.
+          {% else %}
+            Share photos and videos, follow family news and keep your profile up to date.
+          {% endif %}
+        </p>
+      </div>
+      <div class="dash-hero-card">
+        {% if me.avatar %}
+          <img src="{{ me.avatar }}" alt="" class="member-avatar avatar-lg" />
+        {% else %}
+          <span class="avatar-initials avatar-lg" aria-hidden="true">{{ me.name.split() | map('first') | join('') | upper }}</span>
+        {% endif %}
+        <div>
+          <strong>{{ me.name }}</strong>
+          <span class="chip {{ 'chip-admin' if is_admin }}">{{ 'Admin' if is_admin else 'Member' }}</span>
+          <small>{{ me.relationship or 'Family member' }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-stats">
+      <div class="mini-stat"><strong>{{ posts | length }}</strong><span>Memories</span></div>
+      <div class="mini-stat"><strong>{{ members | length }}</strong><span>Members</span></div>
+      <div class="mini-stat"><strong>{{ announcements | length }}</strong><span>Announcements</span></div>
+      <div class="mini-stat"><strong>{{ events | length }}</strong><span>Events</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="container dash-layout">
+
+  <nav class="tabs" id="dashTabs" aria-label="Dashboard sections">
+    <button class="tab is-active" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="tab" data-tab="album" aria-selected="false">Family Album</button>
+    <button class="tab" data-tab="share" aria-selected="false">Share a Memory</button>
+    <button class="tab" data-tab="members" aria-selected="false">Members</button>
+    <button class="tab" data-tab="events" aria-selected="false">Events</button>
+    <button class="tab" data-tab="announcements" aria-selected="false">Announcements</button>
+    {% if is_admin %}
+      <button class="tab" data-tab="requests" aria-selected="false">
+        Requests{% if join_requests %} <span class="tab-count">{{ join_requests | length }}</span>{% endif %}
+      </button>
+      <button class="tab" data-tab="messages" aria-selected="false">Messages</button>
+      <button class="tab" data-tab="activity" aria-selected="false">Activity</button>
+    {% endif %}
+    <button class="tab" data-tab="notifications" aria-selected="false">
+      Notifications{% if unread_count %} <span class="tab-count">{{ unread_count }}</span>{% endif %}
+    </button>
+    <button class="tab" data-tab="profile" aria-selected="false">My Profile</button>
+  </nav>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section class="panel is-active" id="overview">
+    <div class="panel-grid">
+      <article class="panel-card">
+        <h2>Latest announcements</h2>
+        {% if announcements %}
+          <ul class="mini-list">
+            {% for note in announcements[:3] %}
+              <li>
+                <strong>{{ note.title }}</strong>
+                <p>{{ note.body | truncate(110) }}</p>
+                <small>{{ note.author }} &middot; {{ note.created_at[:10] }}</small>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}<p class="empty">Nothing announced yet.</p>{% endif %}
+      </article>
+
+      <article class="panel-card">
+        <h2>Next events</h2>
+        {% if events %}
+          <ul class="mini-list">
+            {% for event in events[:4] %}
+              <li class="row-between">
+                <div>
+                  <strong>{{ event.title }}</strong>
+                  <small>{{ event.date }}{% if event.time %} &middot; {{ event.time }}{% endif %}{% if event.location %} &middot; {{ event.location }}{% endif %}</small>
+                </div>
+                <span class="chip chip-rose">{{ months[(event.date[5:7] | int) - 1] }} {{ event.date[8:10] }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}<p class="empty">No events scheduled.</p>{% endif %}
+      </article>
+
+      <article class="panel-card span-2">
+        <h2>Recently shared</h2>
+        {% if posts %}
+          <div class="thumb-strip">
+            {% for post in posts[:8] %}
+              <a href="#album" class="thumb" data-goto="album" title="{{ post.title }}">
+                {% if post.kind == 'image' %}
+                  <img src="{{ post.url }}" alt="{{ post.title }}" loading="lazy" />
+                {% elif post.kind == 'video' %}
+                  <span class="thumb-icon" aria-hidden="true">&#9654;</span>
+                {% else %}
+                  <span class="thumb-icon" aria-hidden="true">&#128196;</span>
+                {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty">No memories shared yet. <button type="button" class="linklike" data-goto="share">Be the first</button>.</p>
+        {% endif %}
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ ALBUM ============ -->
+  <section class="panel" id="album">
+    <div class="panel-head">
+      <h2>Family Album</h2>
+      <div class="filter-chips" id="albumFilters">
+        <button class="chip-btn is-active" data-filter="all">All</button>
+        <button class="chip-btn" data-filter="image">Photos</button>
+        <button class="chip-btn" data-filter="video">Videos</button>
+        <button class="chip-btn" data-filter="document">Files</button>
+      </div>
+    </div>
+
+    {% if posts %}
+      <div class="media-feed" id="mediaFeed">
+        {% for post in posts %}
+          <article class="media-card" data-id="{{ post.id }}" data-kind="{{ post.kind }}">
+            <div class="media-preview">
+              {% if post.kind == 'image' %}
+                <img src="{{ post.url }}" alt="{{ post.title }}" loading="lazy"
+                     data-lightbox="{{ post.url }}" data-caption="{{ post.title }}" />
+              {% elif post.kind == 'video' %}
+                <video src="{{ post.url }}" controls preload="metadata" playsinline></video>
+              {% else %}
+                <div class="file-display">
+                  <span class="file-icon" aria-hidden="true">&#128196;</span>
+                  <span class="file-name">{{ post.original }}</span>
+                </div>
+              {% endif %}
+              {% if post.visibility == 'public' %}<span class="chip chip-public">Public</span>{% endif %}
+            </div>
+
+            <div class="media-body">
+              <h3>{{ post.title }}</h3>
+              {% if post.desc %}<p>{{ post.desc }}</p>{% endif %}
+              <div class="media-meta">
+                <span>{{ post.uploaded_by }} &middot; {{ post.date }}</span>
+                <div class="media-actions">
+                  <a href="{{ post.url }}" download="{{ post.original }}" class="btn btn-xs btn-ghost">Download</a>
+                  {% if is_admin %}
+                    <button type="button" class="btn btn-xs btn-ghost edit-btn" data-id="{{ post.id }}"
+                            data-title="{{ post.title }}" data-desc="{{ post.desc or '' }}"
+                            data-visibility="{{ post.visibility or 'family' }}">Edit</button>
+                  {% endif %}
+                  {% if is_admin or post.uploaded_by_username == me.username %}
+                    <button type="button" class="btn btn-xs btn-danger delete-btn" data-id="{{ post.id }}">Delete</button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+      <p class="feed-status" id="feedStatus" hidden>No items match this filter.</p>
+    {% else %}
+      <div class="empty-state">
+        <span aria-hidden="true">&#128247;</span>
+        <h3>No memories yet</h3>
+        <p>Upload the first photo or video to start the family album.</p>
+        <button type="button" class="btn" data-goto="share">Share a Memory</button>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- ============ SHARE ============ -->
+  <section class="panel" id="share">
+    <h2>Share a Memory</h2>
+    <p class="section-lead">Post photos, videos or documents for the whole family to see.</p>
+
+    <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+      <div class="field">
+        <label for="title">Title <span class="req">*</span></label>
+        <input type="text" id="title" name="title" placeholder="e.g. Family Reunion 2026" required maxlength="120" />
+      </div>
+
+      <div class="field">
+        <label for="desc">Description</label>
+        <textarea id="desc" name="desc" rows="3" placeholder="Tell us about this memory..." maxlength="1000"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="visibility">Who can see it</label>
+        <select id="visibility" name="visibility">
+          <option value="family">Family only (signed-in members)</option>
+          <option value="public">Public — also show on the home page gallery</option>
+        </select>
+      </div>
+
+      <div class="drop-zone" id="dropZone" tabindex="0" role="button"
+           aria-label="Add photos or videos">
+        <span class="drop-icon" aria-hidden="true">&#128228;</span>
+        <p><strong>Drag &amp; drop</strong> files here</p>
+        <p class="or">or choose below</p>
+
+        <div class="post-buttons">
+          <button type="button" class="btn" id="postImageBtn">
+            <span aria-hidden="true">&#128247;</span> Post Image
+          </button>
+          <button type="button" class="btn btn-outline" id="postVideoBtn">
+            <span aria-hidden="true">&#127909;</span> Post Video
+          </button>
+          <button type="button" class="btn btn-ghost" id="postFileBtn">
+            <span aria-hidden="true">&#128196;</span> Post File
+          </button>
+        </div>
+
+        <input type="file" id="fileInput" name="files" multiple hidden
+               accept="image/*,video/*,.pdf,.docx,.xlsx,.txt" />
+        <small class="hint">Photos, videos and documents &middot; max 100 MB each</small>
+      </div>
+
+      <div id="preview" class="preview" aria-live="polite"></div>
+
+      <div class="progress" id="uploadProgress" hidden><i></i></div>
+
+      <button type="submit" class="btn btn-block" id="submitBtn">Upload to Family Album</button>
+      <p class="form-status" id="uploadStatus" role="status"></p>
+    </form>
+  </section>
+
+  <!-- ============ MEMBERS ============ -->
+  <section class="panel" id="members">
+    <h2>Family Members</h2>
+    <p class="section-lead">{{ members | length }} registered member{{ '' if members | length == 1 else 's' }}.
+      {% if is_admin %}As an administrator you can edit any member's details, including accounts that are deactivated.{% endif %}
+    </p>
+
+    <div class="member-grid">
+      {% for person in members %}
+        {{ member_card(person, is_admin, me) }}
+      {% endfor %}
+    </div>
+
+    {% if is_admin and inactive_members %}
+      <h3 class="member-group-title">Deactivated accounts</h3>
+      <p class="hint">{{ inactive_members | length }} account{{ '' if inactive_members | length == 1 else 's' }}
+        hidden from the directory. Reactivate to give a member their sign-in back.</p>
+      <div class="member-grid member-grid-inactive">
+        {% for person in inactive_members %}
+          {{ member_card(person, is_admin, me) }}
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if is_admin %}
+      <form method="POST" action="{{ url_for('add_member') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <h3>Add a family member</h3>
+        <p class="hint">Give them the starting password in person or by phone. They can change it from their profile.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="m-name">Full name <span class="req">*</span></label>
+            <input type="text" id="m-name" name="name" required maxlength="80" placeholder="e.g. Tamru Belay" />
+          </div>
+          <div class="field">
+            <label for="m-username">Username <span class="req">*</span></label>
+            <input type="text" id="m-username" name="username" required maxlength="24"
+                   pattern="[a-z0-9._\-]{3,24}" placeholder="e.g. tamru" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="m-password">Starting password <span class="req">*</span></label>
+            <input type="text" id="m-password" name="password" required minlength="8" autocomplete="off"
+                   placeholder="At least 8 characters, letter + number" />
+          </div>
+          <div class="field">
+            <label for="m-role">Role</label>
+            <select id="m-role" name="role">
+              <option value="member">Member</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="m-email">Email</label>
+            <input type="email" id="m-email" name="email" maxlength="120" />
+          </div>
+          <div class="field">
+            <label for="m-phone">Phone</label>
+            <input type="tel" id="m-phone" name="phone" maxlength="32" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="m-rel">Relationship</label>
+            <input type="text" id="m-rel" name="relationship" maxlength="60" placeholder="e.g. Nephew" />
+          </div>
+          <div class="field">
+            <label for="m-loc">City / Country</label>
+            <input type="text" id="m-loc" name="location" maxlength="80" placeholder="e.g. Addis Ababa" />
+          </div>
+        </div>
+
+        <button type="submit" class="btn">{{ icon('user-plus') }}Create account</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <!-- ============ ACCESS REQUESTS (admin) ============ -->
+  {% if is_admin %}
+  <section class="panel" id="requests">
+    <div class="panel-head">
+      <h2>Access requests</h2>
+      <span class="chip">{{ join_requests | length }} pending</span>
+    </div>
+
+    <p class="section-lead">These are people who asked to join from the public request form.
+      Approving one creates their sign-in straight away.</p>
+
+    {% if join_requests %}
+      {% for req in join_requests %}
+        <article class="request-card">
+          <header>
+            <h3>{{ req.name }}</h3>
+            <time class="muted" datetime="{{ req.created_at }}">{{ req.created_at[:10] }}</time>
+          </header>
+          <p class="request-meta">
+            {% if req.relationship %}<span>{{ icon('users') }} {{ req.relationship }}</span>{% endif %}
+            {% if req.email %}<span>{{ icon('mail') }} {{ req.email }}</span>{% endif %}
+            {% if req.phone %}<span>{{ icon('phone') }} {{ req.phone }}</span>{% endif %}
+            {% if req.location %}<span>{{ icon('pin') }} {{ req.location }}</span>{% endif %}
+          </p>
+          {% if req.note %}<p class="request-note">{{ req.note }}</p>{% endif %}
+
+          <form method="POST" action="{{ url_for('approve_join_request', record_id=req.id) }}" class="field-row">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="field">
+              <label for="r-username-{{ req.id }}">Username</label>
+              <input type="text" id="r-username-{{ req.id }}" name="username" required maxlength="24"
+                     pattern="[a-z0-9._\-]{3,24}" autocomplete="off"
+                     value="{{ req.name.split() | first | lower }}" />
+            </div>
+            <div class="field">
+              <label for="r-password-{{ req.id }}">Starting password</label>
+              <input type="text" id="r-password-{{ req.id }}" name="password" required minlength="8"
+                     autocomplete="off" placeholder="At least 8 characters" />
+            </div>
+            <div class="field">
+              <label for="r-role-{{ req.id }}">Role</label>
+              <select id="r-role-{{ req.id }}" name="role">
+                <option value="member">Member</option>
+                <option value="admin">Administrator</option>
+              </select>
+            </div>
+            <div class="member-admin">
+              <button type="submit" class="btn btn-sm">{{ icon('shield') }}Approve &amp; create account</button>
+            </div>
+          </form>
+
+          <form method="POST" action="{{ url_for('decline_join_request', record_id=req.id) }}"
+                data-confirm="Decline the request from {{ req.name }}?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-xs btn-ghost">Decline</button>
+          </form>
+        </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No pending requests right now.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- ============ EVENTS ============ -->
+  <section class="panel" id="events">
+    <div class="panel-head">
+      <h2>Family Calendar</h2>
+    </div>
+
+    {% if events %}
+      <ul class="events-list">
+        {% for event in events %}
+          <li class="event-row">
+            <div class="event-date {{ 'is-green' if loop.index0 % 2 }}">
+              <span class="day">{{ event.date[8:10] }}</span>
+              <span class="month">{{ months[(event.date[5:7] | int) - 1] }}</span>
+            </div>
+            <div class="event-body">
+              <h3>{{ event.title }}</h3>
+              {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+              <p class="event-meta">
+                {% if event.time %}<span>{{ icon('clock') }} {{ event.time }}</span>{% endif %}
+                {% if event.location %}<span>{{ icon('pin') }} {{ event.location }}</span>{% endif %}
+              </p>
+            </div>
+            {% if is_admin %}
+              <form method="POST" action="{{ url_for('delete_event', record_id=event.id) }}"
+                    data-confirm="Delete this event?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No events scheduled yet.</p>
+    {% endif %}
+
+    {% if is_admin %}
+      <form method="POST" action="{{ url_for('create_event') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <h3>Add an event</h3>
+        <div class="field-row">
+          <div class="field">
+            <label for="ev-title">Title <span class="req">*</span></label>
+            <input type="text" id="ev-title" name="title" required maxlength="120" placeholder="e.g. Timkat Celebration" />
+          </div>
+          <div class="field">
+            <label for="ev-date">Date <span class="req">*</span></label>
+            <input type="date" id="ev-date" name="date" required />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="ev-time">Time</label>
+            <input type="time" id="ev-time" name="time" />
+          </div>
+          <div class="field">
+            <label for="ev-location">Location</label>
+            <input type="text" id="ev-location" name="location" maxlength="120" placeholder="e.g. Family Home" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="ev-desc">Description</label>
+          <textarea id="ev-desc" name="description" rows="2" maxlength="600"></textarea>
+        </div>
+        <button type="submit" class="btn">Add Event</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <!-- ============ ANNOUNCEMENTS ============ -->
+  <section class="panel" id="announcements">
+    <h2>Announcements</h2>
+
+    {% if announcements %}
+      <div class="announce-stack">
+        {% for note in announcements %}
+          <article class="announce-card {{ 'pinned' if note.pinned }}">
+            <header>
+              <h3>{{ note.title }}</h3>
+              {% if note.pinned %}<span class="chip">Pinned</span>{% endif %}
+            </header>
+            <p>{{ note.body }}</p>
+            <footer>
+              <span>{{ note.author }}</span>
+              <time datetime="{{ note.created_at }}">{{ note.created_at[:10] }}</time>
+              {% if is_admin %}
+                <form method="POST" action="{{ url_for('delete_announcement', record_id=note.id) }}"
+                      data-confirm="Delete this announcement?">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+                </form>
+              {% endif %}
+            </footer>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">No announcements yet.</p>
+    {% endif %}
+
+    {% if is_admin %}
+      <form method="POST" action="{{ url_for('create_announcement') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <h3>Post an announcement</h3>
+        <div class="field">
+          <label for="an-title">Title <span class="req">*</span></label>
+          <input type="text" id="an-title" name="title" required maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="an-body">Message <span class="req">*</span></label>
+          <textarea id="an-body" name="body" rows="4" required maxlength="2000"></textarea>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" name="pinned" /> Pin to the top of the home page
+        </label>
+        <button type="submit" class="btn">Publish Announcement</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <!-- ============ MESSAGES (admin) ============ -->
+  {% if is_admin %}
+  <section class="panel" id="messages">
+    <h2>Contact Messages</h2>
+    {% if messages %}
+      <div class="announce-stack">
+        {% for msg in messages %}
+          <article class="announce-card">
+            <header>
+              <h3>{{ msg.name }}</h3>
+              <span class="chip">{{ msg.email }}</span>
+            </header>
+            <p>{{ msg.message }}</p>
+            <footer>
+              <time datetime="{{ msg.created_at }}">{{ msg.created_at[:10] }}</time>
+              <form method="POST" action="{{ url_for('delete_message', record_id=msg.id) }}" data-confirm="Delete this message?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+              </form>
+            </footer>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">No messages from the contact form yet.</p>
+    {% endif %}
+  </section>
+
+  <!-- ============ ACTIVITY LOG (admin) ============ -->
+  <section class="panel" id="activity">
+    <div class="panel-head">
+      <h2>Activity Log</h2>
+      <span class="chip">{{ activities | length }} entries</span>
+    </div>
+    <p class="section-lead">A record of everything that happens on the family website — member
+      sign-ins, sign-outs and password resets, plus the changes administrators make to memories,
+      members, events, announcements and access requests.</p>
+
+    {% if activities %}
+      <ul class="activity-list">
+        {% for entry in activities %}
+          <li class="activity-row">
+            <span class="activity-badge act-{{ entry.action }}">{{ entry.action | replace('_', ' ') }}</span>
+            <div class="activity-body">
+              <p><strong>{{ entry.actor }}</strong> {{ entry.action | replace('_', ' ') }} {{ entry.target_type }}
+                <strong>{{ entry.target }}</strong></p>
+              {% if entry.detail %}<small>{{ entry.detail }}</small>{% endif %}
+            </div>
+            <time datetime="{{ entry.created_at }}" title="{{ entry.created_at[:19] | replace('T', ' ') }} UTC">{{ entry.created_at | when }}</time>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No admin activity yet. Everything you change will be recorded here.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- ============ NOTIFICATIONS + PROFILE (shared with the member space) ============ -->
+  {{ notifications_panel() }}
+  {{ profile_panel() }}
+
+  <!-- ============ EDIT MEMORY MODAL (admin) ============ -->
+  {% if is_admin %}
+  <div class="modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" hidden>
+    <div class="modal-card">
+      <button class="modal-close" id="editModalClose" type="button" aria-label="Close editor">&times;</button>
+      <h2 id="editModalTitle">Edit Memory</h2>
+      <form id="editForm" novalidate>
+        <div class="field">
+          <label for="editTitle">Title <span class="req">*</span></label>
+          <input type="text" id="editTitle" required maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="editDesc">Description</label>
+          <textarea id="editDesc" rows="3" maxlength="1000"></textarea>
+        </div>
+        <div class="field">
+          <label for="editVisibility">Who can see it</label>
+          <select id="editVisibility">
+            <option value="family">Family only (signed-in members)</option>
+            <option value="public">Public — also show on the home page gallery</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="editCancel">Cancel</button>
+          <button type="submit" class="btn" id="editSave">Save changes</button>
+        </div>
+        <p class="form-status" id="editStatus" role="status"></p>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
