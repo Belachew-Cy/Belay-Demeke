@@ -45,5 +45,5 @@ posts.json
 events.json
 announcements.json
 _private_backup/
-# Personal family media — keep local
-static/img/
+# Big video — too large for GitHub
+static/img/Family Des.mp4
