@@ -35,3 +35,13 @@ users.json
 # OS
 .DS_Store
 Thumbs.db
+# Runtime data — never commit real family data
+users.json
+messages.json
+join_requests.json
+notifications.json
+activity_log.json
+posts.json
+events.json
+announcements.json
+_private_backup/
