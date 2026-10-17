@@ -16,7 +16,6 @@ yarn-error.log*
 .env
 instance/
 _legacy/
-config.py
 
 # Family content — keep private, back these up separately
 uploads/
@@ -47,3 +46,12 @@ announcements.json
 _private_backup/
 # Big video — too large for GitHub
 static/img/Family Des.mp4
+# Junk files
+440379.txt
+Install the neon agent-skill using.txt
+
+# Local SQLite database — contains real user data
+Database/
+*.db
+*.sqlite
+*.sqlite3

@@ -30,7 +30,8 @@
       {% set uid = person.username | replace('.', '-') | replace('_', '-') %}
       <details class="member-edit">
         <summary>{{ icon('sliders') }}Edit details</summary>
-        <form method="POST" action="{{ url_for('edit_member', username=person.username) }}">
+        <form method="POST" action="{{ url_for('edit_member', username=person.username) }}"
+              enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
           <div class="field-row">
@@ -71,6 +72,14 @@
                       placeholder="Shown in the family directory">{{ person.bio }}</textarea>
           </div>
 
+          <div class="field">
+            <label for="e-photo-{{ uid }}">Profile photo</label>
+            <input type="file" id="e-photo-{{ uid }}" name="avatar"
+                   accept="image/png,image/jpeg,image/gif,image/webp" />
+            <span class="hint">Stored in the database with the rest of the record, so a
+              redeploy cannot lose it. Leave empty to keep the current photo.</span>
+          </div>
+
           <p class="hint">Sign-in name <strong>@{{ person.username }}</strong> stays as it is — it is how
             {{ person.name.split()[0] }} logs in.</p>
 
@@ -92,13 +101,24 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn btn-xs btn-ghost">{{ 'Deactivate' if person.is_active else 'Reactivate' }}</button>
           </form>
-
-          <form method="POST" action="{{ url_for('delete_member', username=person.username) }}"
-                data-confirm="Remove {{ person.name }} from the family directory?">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="btn btn-xs btn-danger">Remove</button>
-          </form>
         </div>
+
+        <details class="member-edit">
+          <summary>{{ icon('lock') }}Reset password</summary>
+          <form method="POST" action="{{ url_for('reset_member_password', username=person.username) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <p class="hint">Use this when {{ person.name.split()[0] }} cannot get in. The new password
+              is never shown again on this page and never emailed — tell them in person or by phone.</p>
+
+            <div class="field">
+              <label for="pw-new-{{ uid }}">New password for @{{ person.username }} <span class="req">*</span></label>
+              <input type="text" id="pw-new-{{ uid }}" name="password" required minlength="8"
+                     autocomplete="off" placeholder="At least 8 characters, letter + number" />
+            </div>
+
+            <button type="submit" class="btn btn-sm">{{ icon('check') }}Set password</button>
+          </form>
+        </details>
       {% endif %}
     {% endif %}
   </article>
