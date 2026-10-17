@@ -251,7 +251,9 @@
   <section class="panel" id="members">
     <h2>Family Members</h2>
     <p class="section-lead">{{ members | length }} registered member{{ '' if members | length == 1 else 's' }}.
-      {% if is_admin %}As an administrator you can edit any member's details, including accounts that are deactivated.{% endif %}
+      {% if is_admin %}As an administrator you can edit any member's details, including accounts that are
+        deactivated. Member records are never deleted: deactivate an account to hide it from the directory,
+        and reactivate it later with its photo and history intact.{% endif %}
     </p>
 
     <div class="member-grid">

@@ -5,15 +5,19 @@ import uuid
 from datetime import datetime, timedelta
 from urllib.parse import urlparse, urlsplit
 
+import click
 from flask import (
     Flask, abort, flash, jsonify, redirect, render_template,
-    request, send_from_directory, session, url_for,
+    request, Response, send_from_directory, session, url_for,
 )
+from flask_migrate import Migrate
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+import sqlalchemy as sa
 from werkzeug.utils import secure_filename
 
 import storage
-from config import ALLOWED_EXT, ALLOWED_IMAGE_EXT, Config, media_kind
+from config import ALLOWED_EXT, Config, media_kind
+from models import db
 from security import (
     admin_required, client_key, current_member, email_problem,
     init_csrf, init_session, login_required, login_throttle, password_problem,
@@ -22,6 +26,12 @@ from security import (
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# ------------------------------------------------------------
+# Database setup — must come right after app config
+# ------------------------------------------------------------
+db.init_app(app)
+migrate = Migrate(app, db)
 
 init_session(app)
 init_csrf(app)
@@ -138,6 +148,47 @@ def delete_upload(stored_name: str) -> None:
         path.unlink()
 
 
+AVATAR_CONTENT_TYPES = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+                        "gif": "image/gif", "webp": "image/webp"}
+
+
+def read_image_upload(upload):
+    """Validate a profile photo and return (bytes, content type), or None."""
+    if not upload or not upload.filename:
+        return None
+    original = secure_filename(upload.filename)
+    if "." not in original:
+        return None
+    content_type = AVATAR_CONTENT_TYPES.get(original.rsplit(".", 1)[1].lower())
+    if not content_type:
+        return None
+    data = upload.read()
+    if not data or len(data) > Config.AVATAR_MAX_BYTES:
+        return None
+    return data, content_type
+
+
+def add_missing_columns() -> None:
+    """Add model columns that an existing table does not have yet.
+
+    create_all() only builds absent tables, so a column added to a model after the
+    first deploy would otherwise never reach the database. Only nullable columns
+    are handled here; anything stricter wants a real migration.
+    """
+    inspector = sa.inspect(db.engine)
+    for name, table in db.metadata.tables.items():
+        if name not in inspector.get_table_names():
+            continue
+        present = {column["name"] for column in inspector.get_columns(name)}
+        for column in table.columns:
+            if column.name in present or not column.nullable:
+                continue
+            db.session.execute(sa.text(
+                f'ALTER TABLE {name} ADD COLUMN "{column.name}" '
+                f'{column.type.compile(db.engine.dialect)}'))
+    db.session.commit()
+
+
 def _reset_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(app.secret_key, salt="password-reset")
 
@@ -217,7 +268,6 @@ def login():
         log_activity("login_failed", "session", username or "unknown",
                      detail=request.remote_addr or "",
                      actor=attempted["name"] if attempted else (username or "Unknown"))
-        # One generic message so the form never reveals which accounts exist.
         flash("Invalid username or password.", "danger")
 
     return render_template("login.html", username="", next=request.args.get("next", ""))
@@ -318,7 +368,6 @@ def forgot_password():
         return render_template("forgot_password.html", account=account, errors=errors,
                                locked_for=None, reset_ttl_minutes=ttl_minutes)
 
-    # Match on username OR email, case-insensitive.
     user = storage.get_user(account.lower())
     if not user and (found := storage.find_user_by_email(account)):
         user = storage.get_user(found[0])
@@ -332,8 +381,6 @@ def forgot_password():
     if account_key and not throttle_wait(account_key):
         token = _reset_serializer().dumps(user["username"])
         reset_url = url_for("reset_password", token=token, _external=True)
-        # TODO: wire this to a real mailer (Flask-Mail, SendGrid, SMTP, etc.).
-        # For now, log it so a local admin can hand the link over.
         app.logger.info("Password reset link for %s: %s", user["username"], reset_url)
         throttle_record(account_key)
         log_activity("requested", "password reset", user["username"], actor=user["name"])
@@ -342,7 +389,6 @@ def forgot_password():
                      actor=account, detail=request.remote_addr or "")
 
     throttle_record(device_key)
-    # Same message either way so accounts can't be enumerated.
     flash("If that account exists, a reset link is on its way.", "info")
     return redirect(url_for("forgot_password"))
 
@@ -360,7 +406,6 @@ def reset_password(token):
         flash("That reset link no longer matches an active account.", "warning")
         return redirect(url_for("forgot_password"))
 
-    # Never finish a reset while another member's session is still open.
     session.pop("user", None)
 
     if request.method == "GET":
@@ -370,7 +415,6 @@ def reset_password(token):
     password = request.form.get("password") or ""
     errors = {}
     if (problem := password_problem(password, request.form.get("password2") or "")):
-        # Reuse the shared validator so rules stay consistent with /register.
         errors["password"] = problem
 
     if errors:
@@ -567,24 +611,16 @@ def update_profile():
 @app.route("/profile/avatar", methods=["POST"])
 @login_required
 def upload_avatar():
-    """Members set their own profile photo from a file rather than a pasted URL."""
+    """Members set their own profile photo; the bytes go into the database."""
     me = current_member()
     back = redirect(own_area(me, "profile"))
-    upload = request.files.get("avatar")
 
-    if not upload or not upload.filename:
-        flash("Choose a photo to upload.", "danger")
-        return back
-    if upload.content_length and upload.content_length > Config.AVATAR_MAX_BYTES:
-        flash("Profile photos need to be 5 MB or smaller.", "danger")
+    picture = read_image_upload(request.files.get("avatar"))
+    if not picture:
+        flash("Choose a PNG, JPG, GIF or WEBP photo, 5 MB or smaller.", "danger")
         return back
 
-    saved = save_upload(upload, allowed=ALLOWED_IMAGE_EXT)
-    if not saved:
-        flash("Profile photos must be PNG, JPG, GIF or WEBP.", "danger")
-        return back
-
-    storage.update_user(me["username"], avatar=f"/uploads/{saved[0]}")
+    storage.set_avatar(me["username"], *picture)
     flash("Your profile photo has been updated.", "success")
     return back
 
@@ -873,6 +909,12 @@ def edit_member(username):
         flash("That email is already used by another family member.", "danger")
         return back
 
+    upload = request.files.get("avatar")
+    picture = read_image_upload(upload)
+    if picture is None and upload and upload.filename:
+        flash("Profile photos must be a PNG, JPG, GIF or WEBP file, 5 MB or smaller.", "danger")
+        return back
+
     storage.update_user(
         key,
         name=name,
@@ -882,6 +924,8 @@ def edit_member(username):
         location=safe_text(request.form.get("location"), 80),
         bio=safe_text(request.form.get("bio"), 600),
     )
+    if picture:
+        storage.set_avatar(key, *picture)
     if key.lower() == me["username"].lower():
         session["user"]["name"] = name
     else:
@@ -947,21 +991,49 @@ def toggle_member_active(username):
     return back
 
 
-@app.route("/members/<username>/delete", methods=["POST"])
+@app.route("/members/<username>/photo")
+def member_photo(username):
+    """Serve the photo stored in the database for one member.
+
+    Public, because the family directory on the landing page is public. The bytes
+    travel with the database, so a redeploy on a host with an empty disk cannot
+    lose anyone's face.
+    """
+    picture = storage.get_avatar(username)
+    if not picture:
+        abort(404)
+    data, content_type, _modified = picture
+    response = Response(data, content_type=content_type)
+    # The URL carries the upload time as ?v=, so this response never needs rechecking.
+    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@app.route("/members/<username>/password", methods=["POST"])
 @admin_required
-def delete_member(username):
-    back = redirect(url_for("dashboard", _anchor="members"))
-    if username == current_member()["username"]:
-        flash("You cannot delete your own account.", "danger")
-        return back
+def reset_member_password(username):
+    """Administrators hand out a new passphrase when a member is locked out."""
     target = storage.get_user(username)
     if not target:
         abort(404)
+    back = redirect(url_for("dashboard", _anchor="members"))
 
-    storage.delete_user(username)
-    storage.clear_notifications(username)
-    log_activity("deleted", "member", target["name"], detail=f"account '{username}' removed")
-    flash(f"{target['name']} was removed from the family directory.", "info")
+    password = request.form.get("password", "")
+    if (problem := password_problem(password)):
+        flash(problem, "danger")
+        return back
+
+    storage.set_password(username, password)
+    storage.notify(
+        "account", actor=current_member()["name"], title="Your password was reset",
+        body=f"{current_member()['name']} set a new password for your account. Sign in with it, "
+             "then choose your own under My Profile.",
+        link=url_for("my_space"), usernames=[username],
+    )
+    log_activity("reset", "member", target["name"], detail=f"password for '{username}'")
+    flash(f"A new password is set for {target['name']}. Pass it on directly — it was not emailed.",
+          "success")
     return back
 
 
@@ -1004,8 +1076,25 @@ def handle_error(error):
     return render_template("error.html", code=code, title=title, detail=detail), code
 
 
-storage.migrate_users()
-storage.seed_defaults()
+# create_all() only adds tables that are missing, so it is safe on every boot.
+# It never alters an existing table: that is what ``flask db migrate`` is for.
+with app.app_context():
+    db.create_all()
+    add_missing_columns()
+    storage.seed_defaults()
+
+
+@app.cli.command("import-json")
+@click.option("--data-dir", default=None, metavar="DIR",
+              help="Folder holding the legacy *.json files (default: the app folder).")
+def import_json(data_dir):
+    """Copy the old JSON store into the database. Safe to run twice."""
+    totals = storage.import_legacy_json(data_dir)
+    if not totals:
+        click.echo(f"No legacy *.json files found in {data_dir or Config.DATA_DIR}.")
+        return
+    for name, (added, skipped) in sorted(totals.items()):
+        click.echo(f"{name:16} {added:4} added, {skipped:4} already in the database")
 
 
 if __name__ == "__main__":
