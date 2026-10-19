@@ -25,6 +25,7 @@ from security import (
 )
 
 app = Flask(__name__)
+app.config['WTF_CSRF_ENABLED'] = False
 app.config.from_object(Config)
 
 # ------------------------------------------------------------
