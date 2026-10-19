@@ -277,9 +277,11 @@ def login():
 def create_admin():
     import storage
     from config import Config
-    storage.create_user('admin', 'AdminPassword123!', name='Belay Demeke', role=Config.ROLE_ADMIN)
-    return "Admin user created!"
-
+    try:
+        storage.create_user('admin', 'AdminPassword123!', name='Belay Demeke', role=Config.ROLE_ADMIN)
+        return "SUCCESS: Admin user created!"
+    except Exception as e:
+        return f"ERROR: {str(e)}"
 @app.route("/join", methods=["GET", "POST"])
 def join():
     """Public access request. Accounts are created by an admin, never here."""
