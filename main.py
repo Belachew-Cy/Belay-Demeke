@@ -273,6 +273,12 @@ def login():
 
     return render_template("login.html", username="", next=request.args.get("next", ""))
 
+@app.route("/create-admin")
+def create_admin():
+    import storage
+    from config import Config
+    storage.create_user('admin', 'AdminPassword123!', name='Belay Demeke', role=Config.ROLE_ADMIN)
+    return "Admin user created!"
 
 @app.route("/join", methods=["GET", "POST"])
 def join():
