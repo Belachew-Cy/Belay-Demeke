@@ -58,6 +58,7 @@ def _user_dict(u):
         "relationship": u.relationship or "", "location": u.location or "",
         "bio": u.bio or "", "avatar": u.avatar or "",
         "is_active": bool(u.is_active), "password": u.password,
+        "must_change_password": bool(u.must_change_password),
         "notify": u.notify or dict(NOTIFY_DEFAULTS),
         "joined_at": _iso(u.joined_at),
     }
@@ -124,8 +125,13 @@ def update_user(username, **changes):
 
 
 def set_password(username, password):
-    """Admins and members both land here: only the scrypt hash is ever stored."""
-    return update_user(username, password=hash_password(password))
+    """Admins and members both land here: only the scrypt hash is ever stored.
+
+    Choosing a password of your own is what clears a forced change, so every
+    path that sets one (self-service, reset link, admin reset) ends the gate.
+    """
+    return update_user(username, password=hash_password(password),
+                       must_change_password=False)
 
 
 def avatar_files():

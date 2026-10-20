@@ -1,0 +1,26 @@
+# Render blueprint: https://dashboard.render.com — New -> Blueprint -> this repo.
+# Values marked sync: false are entered once in the dashboard and never committed.
+services:
+  - type: web
+    name: belay-demeke-family
+    runtime: python
+    plan: starter                 # free plans have no persistent disk: uploads would vanish
+    region: ohio                  # Neon is us-east-2; keep the app next to the database
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 main:app
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false               # the Neon pooled connection string
+      - key: SECRET_KEY
+        generateValue: true       # without this every restart signs out the family
+      - key: UPLOAD_DIR
+        value: /opt/render/project/src/uploads
+      - key: ADMIN_USERNAME
+        value: family
+      - key: ADMIN_PASSWORD
+        sync: false               # only read while the users table is empty
+    disk:
+      - name: family-uploads
+        mountPath: /opt/render/project/src/uploads
+        sizeGB: 1

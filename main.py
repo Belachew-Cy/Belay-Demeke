@@ -25,7 +25,6 @@ from security import (
 )
 
 app = Flask(__name__)
-app.config['WTF_CSRF_ENABLED'] = False
 app.config.from_object(Config)
 
 # ------------------------------------------------------------
@@ -261,6 +260,8 @@ def login():
             login_throttle.reset(throttle_key)
             session["user"] = {"username": username, "name": record["name"], "role": record["role"]}
             log_activity("signed_in", "session", username, detail=request.remote_addr or "")
+            if record.get("must_change_password"):
+                return redirect(url_for("force_password_change"))
             flash(f"Welcome back, {record['name'].split()[0]}!", "success")
             return redirect(safe_next(request.form.get("next") or request.args.get("next")))
 
@@ -273,15 +274,7 @@ def login():
 
     return render_template("login.html", username="", next=request.args.get("next", ""))
 
-@app.route("/create-admin")
-def create_admin():
-    import storage
-    from config import Config
-    try:
-        storage.create_user('admin', 'AdminPassword123!', name='Belay Demeke', role=Config.ROLE_ADMIN)
-        return "SUCCESS: Admin user created!"
-    except Exception as e:
-        return f"ERROR: {str(e)}"
+
 @app.route("/join", methods=["GET", "POST"])
 def join():
     """Public access request. Accounts are created by an admin, never here."""
@@ -652,6 +645,49 @@ def change_password():
         flash("Your password has been changed.", "success")
 
     return redirect(own_area(me, "profile"))
+
+
+@app.route("/change-password", methods=["GET", "POST"])
+@login_required
+def force_password_change():
+    """The only page an account holding a temporary passphrase may reach."""
+    me = current_member()
+    if not me.get("must_change_password"):
+        return redirect(own_area(me))
+
+    error = ""
+    if request.method == "POST":
+        current = request.form.get("current_password", "")
+        new = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
+        if not verify_password(me.get("password"), current):
+            error = "That is not the password you signed in with."
+        elif (problem := password_problem(new, confirm)):
+            error = problem
+        elif new == current:
+            error = "Please choose a password different from the temporary one."
+        else:
+            storage.set_password(me["username"], new)
+            log_activity("changed", "password", me["username"])
+            flash("Your new password is set.", "success")
+            return redirect(own_area(me))
+
+    return render_template("change_password.html", error=error, account=me["name"])
+
+
+@app.before_request
+def enforce_password_change():
+    """A handed-over account cannot browse, post or read anything until it has
+    chosen a private passphrase. The gate is here rather than in login() alone
+    so a bookmarked ?next= or a stale session cannot walk past it."""
+    if not session.get("user"):
+        return None
+    if request.endpoint in {None, "static", "logout", "login", "force_password_change"}:
+        return None
+    me = current_member()
+    if me and me.get("must_change_password"):
+        return redirect(url_for("force_password_change"))
+    return None
 
 
 # ============================================

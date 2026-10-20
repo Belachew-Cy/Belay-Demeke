@@ -14,6 +14,9 @@ class User(db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False, index=True)
     name = db.Column(db.String(80), nullable=False)
     password = db.Column(db.String(256), nullable=False)
+    # Set when an account is handed over with a temporary passphrase: every page
+    # then bounces to /change-password until the member picks their own.
+    must_change_password = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(20), default="member")
     email = db.Column(db.String(120))
     phone = db.Column(db.String(32))

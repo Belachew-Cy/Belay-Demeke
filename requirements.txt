@@ -1,8 +1,13 @@
-Flask
-Flask-Migrate
-Flask-SQLAlchemy
-gunicorn
-psycopg2-binary
-python-dotenv
-Werkzeug
-psycopg[binary]
+# Versions verified locally on 2026-10-20 against Python 3.12 / PostgreSQL 18.6.
+Flask==3.1.3
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.1.4
+Werkzeug==3.1.9
+click==8.5.0
+itsdangerous==2.2.0
+gunicorn==21.2.0
+# A plain postgresql:// DSN resolves to psycopg 3 in SQLAlchemy 2.1, so this is
+# the driver the app actually uses; psycopg2 stays only for +psycopg2 URLs.
+psycopg[binary]==3.3.6
+psycopg2-binary==2.9.13

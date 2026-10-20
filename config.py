@@ -74,7 +74,9 @@ class Config:
 
     MAX_CONTENT_LENGTH = 100 * 1024 * 1024
 
-    UPLOAD_DIR = BASE_DIR / "uploads"
+    # Render's filesystem is wiped on every deploy, so a hosted copy points this at
+    # a mounted persistent disk; locally it stays the uploads folder in the app.
+    UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR") or BASE_DIR / "uploads")
     DATA_DIR = BASE_DIR
 
     SQLALCHEMY_DATABASE_URI = _resolve_database_uri()
